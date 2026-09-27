@@ -1,0 +1,57 @@
+name: 'C++ CI'
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - feature/github_actions
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    permissions: write-all
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Configure CMake
+        run: cmake . -DPATCH_VERSION=${{ github.run_number }}
+
+      - name: Build
+        run: cmake --build . --config Release
+
+      - name: Test
+        run: ctest -C Release --output-on-failure
+
+      - name: Package (Linux only)
+        if: runner.os == 'Linux'
+        run: cmake --build . --target package
+
+      - name: Create Release
+        if: runner.os == 'Linux'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        if: runner.os == 'Linux'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./helloworld-0.0.${{ github.run_number }}-Linux.deb
+          asset_name: helloworld-0.0.${{ github.run_number }}-Linux.deb
+          asset_content_type: application/vnd.debian.binary-package
