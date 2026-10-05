@@ -6,7 +6,7 @@ on:
       - main
       - master
       - feature/github_actions
-
+      - lab1
 jobs:
   build:
     runs-on: ${{ matrix.os }}
