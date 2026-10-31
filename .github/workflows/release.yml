@@ -1,0 +1,42 @@
+name: 'CPP CI'
+
+on:
+  push:
+    branches: 
+      - main
+      - lab2
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Set up Windows
+      if: runner.os == 'Windows'
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -S .
+
+    - name: Run file (ЛИНУХ)
+      if: runner.os == 'Linux'
+      working-directory: ${{github.workspace}}
+      run: ./build/lab2T3 < ip_filter.tsv
+
+    - name: Run file (Windows)
+      if: runner.os == 'Windows'
+      working-directory: ${{github.workspace}}
+      shell: cmd
+      run: build\Release\lab2T3.exe < ip_filter.tsv
+      
+    - name: Tests
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C Release --output-on-failure
