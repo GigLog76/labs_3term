@@ -22,15 +22,26 @@ using ip_t = std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>;
 
 ip_t parse_ip(const std::string& str)
 {
-    auto parts = split(str, '.');   // ["1", "2", "3", "4"]
+    auto parts = split(str, '.');
     if (parts.size() != 4)
-        throw std::runtime_error("bad IP: " + str);
+        throw std::runtime_error("bad IP (must have 4 octets): " + str);
+
+    int octets[4];
+
+    for (int i = 0; i < 4; ++i) {
+        int val = std::stoi(parts[i]); 
+
+        if (val < 0 || val > 255) {
+            throw std::runtime_error("bad IP (octet out of range 0-255): " + str);
+        }
+        octets[i] = val;
+    }
 
     return {
-        static_cast<uint8_t>(std::stoi(parts[0])),
-        static_cast<uint8_t>(std::stoi(parts[1])),
-        static_cast<uint8_t>(std::stoi(parts[2])),
-        static_cast<uint8_t>(std::stoi(parts[3]))
+        static_cast<uint8_t>(octets[0]),
+        static_cast<uint8_t>(octets[1]),
+        static_cast<uint8_t>(octets[2]),
+        static_cast<uint8_t>(octets[3])
     };
 }
 
